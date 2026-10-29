@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Pokédex</string>
+    <string name="search_placeholder">Buscar por nombre o número…</string>
+    <string name="no_internet">Sin conexión a internet. Mostrando contenido en caché o reintente.</string>
+    <string name="connected">Conexión restablecida</string>
+    <string name="retry">Reintentar</string>
+    <string name="all_types">Todos</string>
+    <string name="about">Acerca de</string>
+    <string name="base_stats">Estadísticas Base</string>
+    <string name="abilities">Habilidades</string>
+    <string name="height">Altura</string>
+    <string name="weight">Peso</string>
+    <string name="capture_rate">Captura</string>
+    <string name="happiness">Felicidad</string>
+    <string name="habitat">Hábitat</string>
+    <string name="generation">Generación</string>
+    <string name="empty_results">No se encontraron Pokémon con ese criterio</string>
+</resources>
