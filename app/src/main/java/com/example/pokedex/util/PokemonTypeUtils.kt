@@ -4,6 +4,27 @@ import androidx.compose.ui.graphics.Color
 
 object PokemonTypeUtils {
 
+    val STANDARD_TYPES = listOf(
+        "normal",
+        "fire",
+        "water",
+        "grass",
+        "electric",
+        "ice",
+        "fighting",
+        "poison",
+        "ground",
+        "flying",
+        "psychic",
+        "bug",
+        "rock",
+        "ghost",
+        "dragon",
+        "steel",
+        "fairy",
+        "dark"
+    )
+
     fun getTypeColor(type: String): Color {
         return when (type.lowercase()) {
             "normal" -> Color(0xFFA8A878)

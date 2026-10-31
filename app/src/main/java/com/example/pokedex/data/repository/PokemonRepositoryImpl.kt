@@ -78,16 +78,19 @@ class PokemonRepositoryImpl @Inject constructor(
     override suspend fun getPokemonTypes(): Resource<List<String>> {
         return try {
             val response = apiService.getPokemonTypes()
-            // Filtramos tipos que no son estándar en juegos principales
             val excluded = setOf("unknown", "shadow", "stellar")
             val types = response.results
                 .map { it.name }
                 .filter { it !in excluded }
-            Resource.Success(types)
-        } catch (e: IOException) {
-            Resource.Error("Error de conexión al cargar tipos.")
+
+            if (types.isNotEmpty()) {
+                Resource.Success(types)
+            } else {
+                Resource.Success(PokemonTypeUtils.STANDARD_TYPES)
+            }
         } catch (e: Exception) {
-            Resource.Error("Error al cargar tipos: ${e.localizedMessage}")
+            // Fallback seguro con los tipos canónicos estándar de Pokémon
+            Resource.Success(PokemonTypeUtils.STANDARD_TYPES)
         }
     }
 

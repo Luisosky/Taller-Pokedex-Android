@@ -1,6 +1,7 @@
 package com.example.pokedex.ui.list
 
 import com.example.pokedex.domain.model.PokemonListItem
+import com.example.pokedex.util.PokemonTypeUtils
 
 data class PokemonListUiState(
     val pokemonList: List<PokemonListItem> = emptyList(),
@@ -9,7 +10,7 @@ data class PokemonListUiState(
     val errorMessage: String? = null,
     val searchQuery: String = "",
     val selectedType: String? = null,
-    val availableTypes: List<String> = emptyList(),
+    val availableTypes: List<String> = PokemonTypeUtils.STANDARD_TYPES,
     val isEndReached: Boolean = false,
     val isOnline: Boolean = true
 )
