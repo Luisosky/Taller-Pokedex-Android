@@ -145,7 +145,7 @@ fun PokemonListScreen(
                     uiState.isLoading -> {
                         Column(
                             modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterVertically,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
                             CircularProgressIndicator(
@@ -175,7 +175,7 @@ fun PokemonListScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(24.dp),
-                            horizontalAlignment = Alignment.CenterVertically,
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
                             Icon(
