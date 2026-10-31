@@ -1,6 +1,7 @@
 package com.example.pokedex.ui.list
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,12 +20,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CatchingPokemon
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -32,9 +38,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +55,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pokedex.R
 import com.example.pokedex.ui.components.ConnectivityBanner
 import com.example.pokedex.ui.components.ErrorView
+import com.example.pokedex.ui.components.FilterBottomSheet
 import com.example.pokedex.ui.components.FilterChipGroup
 import com.example.pokedex.ui.components.PokeSearchBar
 import com.example.pokedex.ui.components.PokemonCard
+import com.example.pokedex.util.PokemonTypeUtils
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +71,17 @@ fun PokemonListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
+    var showFilterSheet by remember { mutableStateOf(false) }
+
+    // BottomSheet para seleccionar el tipo elemental (se abre con el botón de las 3 rayas)
+    if (showFilterSheet) {
+        FilterBottomSheet(
+            types = uiState.availableTypes,
+            selectedType = uiState.selectedType,
+            onTypeSelected = viewModel::onTypeSelected,
+            onDismissRequest = { showFilterSheet = false }
+        )
+    }
 
     // Detección reactiva de scroll infinito: cuando el usuario se acerca a los últimos 4 elementos
     LaunchedEffect(gridState, uiState.pokemonList.size) {
@@ -111,27 +134,83 @@ fun PokemonListScreen(
             // Indicador de conexión Online / Offline
             ConnectivityBanner(isOnline = uiState.isOnline)
 
-            // Barra de búsqueda por nombre o ID
-            Box(
+            // Barra de búsqueda por nombre o ID y Botón de Filtro (3 rayas)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 PokeSearchBar(
                     query = uiState.searchQuery,
                     onQueryChange = viewModel::onSearchQueryChange,
-                    onClearQuery = { viewModel.onSearchQueryChange("") }
+                    onClearQuery = { viewModel.onSearchQueryChange("") },
+                    modifier = Modifier.weight(1f)
                 )
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                // Botón de 3 rayas (Filtro por tipo)
+                val isFilterActive = uiState.selectedType != null
+                val filterColor = if (isFilterActive) {
+                    PokemonTypeUtils.getTypeColor(uiState.selectedType!!)
+                } else {
+                    MaterialTheme.colorScheme.primary
+                }
+
+                FilledIconButton(
+                    onClick = { showFilterSheet = true },
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = filterColor
+                    ),
+                    modifier = Modifier.size(52.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = "Filtrar por tipo",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
 
-            // Filtro selector por tipo elemental
-            if (uiState.availableTypes.isNotEmpty()) {
-                FilterChipGroup(
-                    types = uiState.availableTypes,
-                    selectedType = uiState.selectedType,
-                    onTypeSelected = viewModel::onTypeSelected,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+            // Indicador de filtro activo con opción de remover
+            if (uiState.selectedType != null) {
+                val activeTypeColor = PokemonTypeUtils.getTypeColor(uiState.selectedType!!)
+                val typeNameSpanish = PokemonTypeUtils.getTypeNameInSpanish(uiState.selectedType!!)
+
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                    color = activeTypeColor.copy(alpha = 0.15f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, activeTypeColor),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Filtro activo: $typeNameSpanish",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = activeTypeColor,
+                            fontSize = 12.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Quitar filtro",
+                            tint = activeTypeColor,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .clickable { viewModel.onTypeSelected(null) }
+                        )
+                    }
+                }
             }
 
             // Contenido dinámico según el estado
