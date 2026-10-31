@@ -43,7 +43,7 @@ class PokemonRepositoryImpl @Inject constructor(
 
     override suspend fun getPokemonDetail(nameOrId: String): Resource<PokemonDetail> {
         return try {
-            val cleanQuery = nameOrId.lowercase().trim()
+            val cleanQuery = normalizeQuery(nameOrId)
 
             // Consultar endpoint 2 (/pokemon/{id}) y endpoint 4 (/pokemon-species/{id})
             coroutineScope {
@@ -116,7 +116,10 @@ class PokemonRepositoryImpl @Inject constructor(
 
     override suspend fun searchPokemon(query: String): Resource<PokemonListItem> {
         return try {
-            val cleanQuery = query.lowercase().trim()
+            val cleanQuery = normalizeQuery(query)
+            if (cleanQuery.isEmpty()) {
+                return Resource.Error("Por favor ingrese un nombre o número válido.")
+            }
             val dto = apiService.getPokemonDetail(cleanQuery)
             val item = PokemonListItem(
                 id = dto.id,
@@ -130,12 +133,28 @@ class PokemonRepositoryImpl @Inject constructor(
             Resource.Error("Error de conexión al buscar '$query'.")
         } catch (e: retrofit2.HttpException) {
             if (e.code() == 404) {
-                Resource.Error("No se encontró ningún Pokémon llamado '$query'.")
+                Resource.Error("No se encontró ningún Pokémon con '$query'.")
             } else {
                 Resource.Error("Error HTTP ${e.code()} al realizar la búsqueda.")
             }
         } catch (e: Exception) {
             Resource.Error("Error en la búsqueda: ${e.localizedMessage}")
+        }
+    }
+
+    /**
+     * Normaliza el texto de búsqueda:
+     * - Remueve símbolos como '#' (ej: "#001" -> "001")
+     * - Si son números con ceros a la izquierda, los convierte al entero base (ej: "001" -> "1", "025" -> "25")
+     * - Si es texto, elimina espacios y lo pasa a minúsculas (ej: "  Pikachu " -> "pikachu")
+     */
+    private fun normalizeQuery(input: String): String {
+        val trimmed = input.trim().removePrefix("#").trim()
+        val numericValue = trimmed.toIntOrNull()
+        return if (numericValue != null && numericValue > 0) {
+            numericValue.toString()
+        } else {
+            trimmed.lowercase()
         }
     }
 
